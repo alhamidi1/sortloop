@@ -1,0 +1,18 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');const assert=require('node:assert/strict');
+const dom=new JSDOM(fs.readFileSync('dist/index.html','utf8'),{url:'https://sortloop.test/',runScripts:'outside-only'});const w=dom.window;
+w.fetch=async()=>({ok:true,json:async()=>JSON.parse(fs.readFileSync('dist/metrics.json','utf8'))});
+w.eval(fs.readFileSync('dist/app.js','utf8')+';Object.assign(window,{renderRecords,changePage,chooseFile,chooseSample,route,analyze});window.__setPrediction=(p)=>{prediction=p};');const $=id=>w.document.getElementById(id);
+assert.equal(w.document.querySelectorAll('.sample').length,6);assert.equal($('records').textContent.includes('Your first'),true);
+w.__setPrediction({name:'metal',score:.8});$('review-form').hidden=false;$('material').value='metal';
+$('review-form').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.match($('form-error').textContent,/Confirm/);assert.equal(w.localStorage.length,0);
+$('confirmed').checked=true;$('weight').value='-1';$('review-form').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.match($('form-error').textContent,/weight/);assert.equal(w.localStorage.length,0);
+$('weight').value='0.25';$('material').value='plastic';$('review-form').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(w.localStorage.length,1);const record=JSON.parse(w.localStorage.getItem(w.localStorage.key(0)));assert.equal(record.material,'plastic');assert.equal(record.suggested,'metal');assert.equal(record.weight,.25);
+$('review-form').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(w.localStorage.length,1,'duplicate save blocked');
+$('filter').value='paper';$('filter').dispatchEvent(new w.Event('change'));assert.match($('records').textContent,/No intakes match/);
+$('filter').value='all';$('filter').dispatchEvent(new w.Event('change'));assert.match($('records').textContent,/plastic/);
+for(let i=0;i<12;i++)w.localStorage.setItem('sortloop.intake.v1.test'+i,JSON.stringify({...record,id:'test'+i}));w.renderRecords();assert.equal($('records').children.length,10);assert.equal($('next').disabled,false);w.changePage(1);assert.equal($('records').children.length,3);assert.equal($('next').disabled,true);
+w.chooseFile(new w.File(['abc'],'notes.txt',{type:'text/plain'}));assert.match($('analysis-status').textContent,/Choose a JPG/);
+w.chooseSample('glass');assert.equal($('preview').getAttribute('src'),'samples/glass.jpg');assert.equal($('review-form').hidden,true);
+w.location.hash='model';w.route();assert.equal($('model').hidden,false);assert.equal($('workspace').hidden,true);
+w.ort={env:{wasm:{}},InferenceSession:{create:async()=>{throw Error('Unavailable')}}};w.fetch=async()=>{throw Error('Offline')};
+(async()=>{await w.analyze();assert.match($('analysis-status').textContent,/Analysis failed/);assert.equal($('analyze').disabled,false);assert.equal($('review-form').hidden,true);console.log('PASS: empty state, review required, invalid weight, corrected save, duplicate prevention, filters, paging, upload rejection, sample reset, navigation, failed inference recovery.');dom.window.close()})();

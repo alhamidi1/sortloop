@@ -1,0 +1,4 @@
+# SortLoop
+A public, browser-local pilot for small recycling collection teams. One photographed item becomes a human-reviewed material label and optional weight record. Not a detector, safety assessor, resin identifier, or automated payment system. No claims of validated revenue or field accuracy.
+All photos remain in browser memory. Only explicitly saved material/weight/date records persist in this browser. No shared organization database or billing. Export before moving devices. Human confirmation is mandatory. Unsupported materials can be recorded as Unknown / manual review.
+Business hypothesis: collection operators pay for faster onboarding and more consistent material logs. Proposed subscription IDR 199,000/site/month is an unvalidated price hypothesis, with no payment collection. Pilot measures sorting time, correction rate, and retention before commercialization.

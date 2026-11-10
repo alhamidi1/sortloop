@@ -1,0 +1,12 @@
+node_modules/
+__pycache__/
+*.pyc
+*.tar.gz
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.DS_Store
+.openai/hosting.json
+/report Deaplearning.pdf
